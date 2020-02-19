@@ -1,0 +1,13 @@
+version: "3.7"
+
+services:
+  rater:
+    build: .
+    working_dir: /app
+    init: true
+    volumes:
+      - .:/app
+      - pkg:/go/pkg
+
+volumes:
+  pkg:

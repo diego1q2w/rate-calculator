@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -eu
+
+docker-compose run --rm --no-deps drop /bin/sh -c "export GO111MODULE=off && go get -u gopkg.in/roblaszczak/go-cleanarch.v1 && cd pkg && /go/bin/go-cleanarch.v1"
+docker-compose run --rm --no-deps drop golangci-lint run ./...
