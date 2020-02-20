@@ -29,9 +29,9 @@ func TestSegmenter(t *testing.T) {
 				{RideID: 3, Lat: 2, Long: 6, Timestamp: 3600 * 7},
 			},
 			expectedSegments: []*SegmentDelta{
-				{RideID: 1, Distance: 7, Time: 1, Velocity: 7},
-				{RideID: 1, Distance: 13, Time: 2, Velocity: 6.5},
-				{RideID: 3, Distance: 13, Time: 5, Velocity: 2.6},
+				{RideID: 1, Distance: 7, Duration: 1, Velocity: 7, Date: time.Date(1970, 1, 1, 1, 0, 0, 0, time.UTC)},
+				{RideID: 1, Distance: 13, Duration: 2, Velocity: 6.5, Date: time.Date(1970, 1, 1, 2, 0, 0, 0, time.UTC)},
+				{RideID: 3, Distance: 13, Duration: 5, Velocity: 2.6, Date: time.Date(1970, 1, 1, 2, 0, 0, 0, time.UTC)},
 			},
 		},
 	}
@@ -51,14 +51,13 @@ func TestSegmenter(t *testing.T) {
 				return 0, d
 			}
 
-			segmenter := NewSegmenter(segmentFilter, distanceCalc, 3)
+			segmenter := NewSegmenter(segmentFilter, distanceCalc, 0)
 
 			for _, p := range tc.postitions {
 				if err := segmenter.Segment(p); err != nil {
 					t.Fatalf("unexpected error while segmenting: %s", err)
 				}
 			}
-			time.Sleep(100 * time.Millisecond)
 			assert.Equal(t, tc.expectedSegments, deltaSegments)
 		})
 	}

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/umahmood/haversine"
+	"time"
 )
 
 type Segmenter struct {
@@ -19,7 +20,10 @@ func NewSegmenter(filter segmentFilter, distanceCalc distanceCalc, workers int) 
 		distanceCalc: distanceCalc,
 		rideSegment:  make(map[RideID]segment),
 	}
-	s.spinWorkers(workers)
+	if workers > 0 {
+		s.spinWorkers(workers)
+	}
+
 	return s
 }
 
@@ -36,7 +40,7 @@ type Position struct {
 	RideID    RideID
 	Lat       float64
 	Long      float64
-	Timestamp uint32
+	Timestamp int64
 }
 
 type rideSegment map[RideID]segment
@@ -68,24 +72,29 @@ func (s *segment) pushElement(position *Position) error {
 }
 
 func (s *segment) calculate(distanceCalc distanceCalc) (*SegmentDelta, error) {
-	sDelta := &SegmentDelta{RideID: s.id, Dirty: false}
+	sDelta := &SegmentDelta{
+		RideID: s.id,
+		Dirty:  false,
+		Date:   time.Unix(s.p1.Timestamp, 0).UTC(),
+	}
 
 	p1 := haversine.Coord{Lat: s.p1.Lat, Lon: s.p1.Long}
 	p2 := haversine.Coord{Lat: s.p2.Lat, Lon: s.p2.Long}
 	_, km := distanceCalc(p1, p2)
 	sDelta.Distance = float32(km)
 
-	sDelta.Time = float32(s.p2.Timestamp-s.p1.Timestamp) / float32(3600)
+	sDelta.Duration = float32(s.p2.Timestamp-s.p1.Timestamp) / float32(3600)
 
-	sDelta.Velocity = sDelta.Distance / sDelta.Time
+	sDelta.Velocity = sDelta.Distance / sDelta.Duration
 	return sDelta, nil
 }
 
 type SegmentDelta struct {
 	RideID   RideID
 	Dirty    bool
-	Distance float32
-	Time     float32
+	Distance float32 //Km
+	Duration float32 // Hours
+	Date     time.Time
 	Velocity float32
 }
 
@@ -100,7 +109,11 @@ func (s *Segmenter) Segment(position *Position) error {
 	s.rideSegment[position.RideID] = rSegment
 
 	if rSegment.isReady() {
-		s.workerCh <- rSegment
+		if s.workerCh != nil {
+			s.workerCh <- rSegment
+		} else {
+			s.calculate(rSegment)
+		}
 	}
 	return nil
 }
@@ -119,14 +132,18 @@ func (s *Segmenter) Close() {
 
 func (s *Segmenter) worker() {
 	for segment := range s.workerCh {
-		sDelta, err := segment.calculate(s.distanceCalc)
-		if err != nil {
-			fmt.Printf("error calculating distance: %s", err)
-			continue
-		}
+		s.calculate(segment)
+	}
+}
 
-		if err := s.filter.Filter(sDelta); err != nil {
-			fmt.Printf("error applying filer: %s", err)
-		}
+func (s *Segmenter) calculate(segment segment) {
+	sDelta, err := segment.calculate(s.distanceCalc)
+	if err != nil {
+		fmt.Printf("error calculating distance: %s", err)
+		return
+	}
+
+	if err := s.filter.Filter(sDelta); err != nil {
+		fmt.Printf("error applying filer: %s", err)
 	}
 }
