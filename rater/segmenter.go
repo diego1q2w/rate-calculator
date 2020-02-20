@@ -7,7 +7,7 @@ import (
 )
 
 type Segmenter struct {
-	calculateCh  chan segment
+	workerCh     chan segment
 	filter       segmentFilter
 	rideSegment  rideSegment
 	distanceCalc distanceCalc
@@ -27,7 +27,7 @@ type distanceCalc = func(p, q haversine.Coord) (mi, km float64)
 
 //go:generate moq -out segment_filter_mock_test.go . segmentFilter
 type segmentFilter interface {
-	Filter(delta *SegmentDelta)
+	Filter(delta *SegmentDelta) error
 }
 
 type RideID uint64
@@ -68,7 +68,7 @@ func (s *segment) pushElement(position *Position) error {
 }
 
 func (s *segment) calculate(distanceCalc distanceCalc) (*SegmentDelta, error) {
-	sDelta := &SegmentDelta{RideID: s.id}
+	sDelta := &SegmentDelta{RideID: s.id, Dirty: false}
 
 	p1 := haversine.Coord{Lat: s.p1.Lat, Lon: s.p1.Long}
 	p2 := haversine.Coord{Lat: s.p2.Lat, Lon: s.p2.Long}
@@ -83,6 +83,7 @@ func (s *segment) calculate(distanceCalc distanceCalc) (*SegmentDelta, error) {
 
 type SegmentDelta struct {
 	RideID   RideID
+	Dirty    bool
 	Distance float32
 	Time     float32
 	Velocity float32
@@ -99,31 +100,33 @@ func (s *Segmenter) Segment(position *Position) error {
 	s.rideSegment[position.RideID] = rSegment
 
 	if rSegment.isReady() {
-		s.calculateCh <- rSegment
+		s.workerCh <- rSegment
 	}
 	return nil
 }
 
 func (s *Segmenter) spinWorkers(numberOfWorkers int) {
 	ch := make(chan segment)
-	s.calculateCh = ch
+	s.workerCh = ch
 	for i := 0; i < numberOfWorkers; i++ {
 		go s.worker()
 	}
 }
 
 func (s *Segmenter) Close() {
-	close(s.calculateCh)
+	close(s.workerCh)
 }
 
 func (s *Segmenter) worker() {
-	for segment := range s.calculateCh {
+	for segment := range s.workerCh {
 		sDelta, err := segment.calculate(s.distanceCalc)
 		if err != nil {
 			fmt.Printf("error calculating distance: %s", err)
 			continue
 		}
 
-		s.filter.Filter(sDelta)
+		if err := s.filter.Filter(sDelta); err != nil {
+			fmt.Printf("error applying filer: %s", err)
+		}
 	}
 }

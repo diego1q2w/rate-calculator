@@ -40,8 +40,9 @@ func TestSegmenter(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			deltaSegments := make([]*SegmentDelta, 0)
 			segmentFilter := &segmentFilterMock{
-				FilterFunc: func(delta *SegmentDelta) {
+				FilterFunc: func(delta *SegmentDelta) error {
 					deltaSegments = append(deltaSegments, delta)
+					return nil
 				},
 			}
 

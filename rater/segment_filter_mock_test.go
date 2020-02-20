@@ -21,7 +21,7 @@ var _ segmentFilter = &segmentFilterMock{}
 //
 //         // make and configure a mocked segmentFilter
 //         mockedsegmentFilter := &segmentFilterMock{
-//             FilterFunc: func(delta *SegmentDelta)  {
+//             FilterFunc: func(delta *SegmentDelta) error {
 // 	               panic("mock out the Filter method")
 //             },
 //         }
@@ -32,7 +32,7 @@ var _ segmentFilter = &segmentFilterMock{}
 //     }
 type segmentFilterMock struct {
 	// FilterFunc mocks the Filter method.
-	FilterFunc func(delta *SegmentDelta)
+	FilterFunc func(delta *SegmentDelta) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -45,7 +45,7 @@ type segmentFilterMock struct {
 }
 
 // Filter calls FilterFunc.
-func (mock *segmentFilterMock) Filter(delta *SegmentDelta) {
+func (mock *segmentFilterMock) Filter(delta *SegmentDelta) error {
 	if mock.FilterFunc == nil {
 		panic("segmentFilterMock.FilterFunc: method is nil but segmentFilter.Filter was just called")
 	}
@@ -57,7 +57,7 @@ func (mock *segmentFilterMock) Filter(delta *SegmentDelta) {
 	locksegmentFilterMockFilter.Lock()
 	mock.calls.Filter = append(mock.calls.Filter, callInfo)
 	locksegmentFilterMockFilter.Unlock()
-	mock.FilterFunc(delta)
+	return mock.FilterFunc(delta)
 }
 
 // FilterCalls gets all the calls that were made to Filter.
