@@ -1,4 +1,4 @@
-package rater
+package app
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -9,7 +9,7 @@ import (
 )
 
 // It tests the whole flow
-func TestRaterFlow(t *testing.T) {
+func TestAppFlow(t *testing.T) {
 	var minFare float32 = 5.0                 // Minimal fare
 	var flagFare float32 = 1.0                // Fare you get each ride
 	var nightFare float32 = 1.0               // Fare you get during the night

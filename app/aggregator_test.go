@@ -1,4 +1,4 @@
-package rater
+package app
 
 import (
 	"github.com/stretchr/testify/assert"

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-docker-compose run --no-deps --rm rater \
+docker-compose run --no-deps --rm app \
 	go get github.com/matryer/moq && \
 	go generate ./...
