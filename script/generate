@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-docker-compose run --no-deps --rm inactive_user_password_resetter \
+docker-compose run --no-deps --rm rater \
 	go get github.com/matryer/moq && \
 	go generate ./...

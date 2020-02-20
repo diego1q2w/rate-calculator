@@ -1,0 +1,64 @@
+package rater
+
+import (
+	"github.com/stretchr/testify/assert"
+	"github.com/umahmood/haversine"
+	"testing"
+	"time"
+)
+
+func TestSegmenter(t *testing.T) {
+	testCases := map[string]struct {
+		postitions       []*Position
+		expectedSegments []*SegmentDelta
+	}{
+		"if not enough points nothing should happen": {
+			postitions: []*Position{
+				{RideID: 1, Lat: 1, Long: 1, Timestamp: 1405589100},
+				{RideID: 2, Lat: 1, Long: 2, Timestamp: 1405589110},
+				{RideID: 3, Lat: 1, Long: 4, Timestamp: 1405589130},
+			},
+			expectedSegments: []*SegmentDelta{},
+		}, "should classify the segments correctly": {
+			postitions: []*Position{
+				{RideID: 1, Lat: 1, Long: 1, Timestamp: 3600},
+				{RideID: 2, Lat: 1, Long: 2, Timestamp: 3600},
+				{RideID: 1, Lat: 2, Long: 3, Timestamp: 3600 * 2},
+				{RideID: 3, Lat: 1, Long: 4, Timestamp: 3600 * 2},
+				{RideID: 1, Lat: 3, Long: 5, Timestamp: 3600 * 4},
+				{RideID: 3, Lat: 2, Long: 6, Timestamp: 3600 * 7},
+			},
+			expectedSegments: []*SegmentDelta{
+				{RideID: 1, Distance: 7, Time: 1, Velocity: 7},
+				{RideID: 1, Distance: 13, Time: 2, Velocity: 6.5},
+				{RideID: 3, Distance: 13, Time: 5, Velocity: 2.6},
+			},
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			deltaSegments := make([]*SegmentDelta, 0)
+			segmentFilter := &segmentFilterMock{
+				FilterFunc: func(delta *SegmentDelta) {
+					deltaSegments = append(deltaSegments, delta)
+				},
+			}
+
+			distanceCalc := func(p1, p2 haversine.Coord) (mi, km float64) {
+				d := p1.Lat + p1.Lon + p2.Lat + p2.Lon
+				return 0, d
+			}
+
+			segmenter := NewSegmenter(segmentFilter, distanceCalc, 3)
+
+			for _, p := range tc.postitions {
+				if err := segmenter.Segment(p); err != nil {
+					t.Fatalf("unexpected error while segmenting: %s", err)
+				}
+			}
+			time.Sleep(100 * time.Millisecond)
+			assert.Equal(t, tc.expectedSegments, deltaSegments)
+		})
+	}
+}

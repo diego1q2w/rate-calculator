@@ -1,0 +1,129 @@
+package rater
+
+import (
+	"errors"
+	"fmt"
+	"github.com/umahmood/haversine"
+)
+
+type Segmenter struct {
+	calculateCh  chan segment
+	filter       segmentFilter
+	rideSegment  rideSegment
+	distanceCalc distanceCalc
+}
+
+func NewSegmenter(filter segmentFilter, distanceCalc distanceCalc, workers int) *Segmenter {
+	s := &Segmenter{
+		filter:       filter,
+		distanceCalc: distanceCalc,
+		rideSegment:  make(map[RideID]segment),
+	}
+	s.spinWorkers(workers)
+	return s
+}
+
+type distanceCalc = func(p, q haversine.Coord) (mi, km float64)
+
+//go:generate moq -out segment_filter_mock_test.go . segmentFilter
+type segmentFilter interface {
+	Filter(delta *SegmentDelta)
+}
+
+type RideID uint64
+
+type Position struct {
+	RideID    RideID
+	Lat       float64
+	Long      float64
+	Timestamp uint32
+}
+
+type rideSegment map[RideID]segment
+
+type segment struct {
+	id RideID
+	p1 *Position
+	p2 *Position
+}
+
+func (s *segment) isReady() bool {
+	return s.p1 != nil && s.p2 != nil
+}
+
+func (s *segment) pushElement(position *Position) error {
+	if position == nil {
+		return errors.New("can not have a nil position")
+	}
+	if s.p1 == nil {
+		s.p1 = position
+	} else if s.p2 == nil {
+		s.p2 = position
+	} else {
+		s.p1 = s.p2
+		s.p2 = position
+	}
+
+	return nil
+}
+
+func (s *segment) calculate(distanceCalc distanceCalc) (*SegmentDelta, error) {
+	sDelta := &SegmentDelta{RideID: s.id}
+
+	p1 := haversine.Coord{Lat: s.p1.Lat, Lon: s.p1.Long}
+	p2 := haversine.Coord{Lat: s.p2.Lat, Lon: s.p2.Long}
+	_, km := distanceCalc(p1, p2)
+	sDelta.Distance = float32(km)
+
+	sDelta.Time = float32(s.p2.Timestamp-s.p1.Timestamp) / float32(3600)
+
+	sDelta.Velocity = sDelta.Distance / sDelta.Time
+	return sDelta, nil
+}
+
+type SegmentDelta struct {
+	RideID   RideID
+	Distance float32
+	Time     float32
+	Velocity float32
+}
+
+func (s *Segmenter) Segment(position *Position) error {
+	rSegment, ok := s.rideSegment[position.RideID]
+	if !ok {
+		rSegment = segment{id: position.RideID}
+	}
+	if err := rSegment.pushElement(position); err != nil {
+		return err
+	}
+	s.rideSegment[position.RideID] = rSegment
+
+	if rSegment.isReady() {
+		s.calculateCh <- rSegment
+	}
+	return nil
+}
+
+func (s *Segmenter) spinWorkers(numberOfWorkers int) {
+	ch := make(chan segment)
+	s.calculateCh = ch
+	for i := 0; i < numberOfWorkers; i++ {
+		go s.worker()
+	}
+}
+
+func (s *Segmenter) Close() {
+	close(s.calculateCh)
+}
+
+func (s *Segmenter) worker() {
+	for segment := range s.calculateCh {
+		sDelta, err := segment.calculate(s.distanceCalc)
+		if err != nil {
+			fmt.Printf("error calculating distance: %s", err)
+			continue
+		}
+
+		s.filter.Filter(sDelta)
+	}
+}
