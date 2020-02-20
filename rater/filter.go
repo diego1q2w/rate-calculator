@@ -2,18 +2,18 @@ package rater
 
 import "fmt"
 
-//go:generate moq -out aggregator_mock_test.go . aggregator
-type aggregator interface {
-	Aggregate(delta *SegmentDelta) error
+//go:generate moq -out estimator_mock_test.go . estimator
+type estimator interface {
+	Estimate(delta *SegmentDelta) error
 }
 
 type SpeedFilter struct {
-	aggregator aggregator
+	estimator  estimator
 	speedLimit float32
 }
 
-func NewSpeedFilter(aggregator aggregator, speedLimit float32) *SpeedFilter {
-	return &SpeedFilter{aggregator: aggregator, speedLimit: speedLimit}
+func NewSpeedFilter(estimator estimator, speedLimit float32) *SpeedFilter {
+	return &SpeedFilter{estimator: estimator, speedLimit: speedLimit}
 }
 
 func (f *SpeedFilter) Filter(delta *SegmentDelta) error {
@@ -21,8 +21,8 @@ func (f *SpeedFilter) Filter(delta *SegmentDelta) error {
 		delta.Dirty = true
 	}
 
-	if err := f.aggregator.Aggregate(delta); err != nil {
-		return fmt.Errorf("unable to aggregate :%w", err)
+	if err := f.estimator.Estimate(delta); err != nil {
+		return fmt.Errorf("unable to estimate :%w", err)
 	}
 
 	return nil

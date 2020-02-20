@@ -12,14 +12,14 @@ func TestSpeedFilter(t *testing.T) {
 		delta          *SegmentDelta
 		speedLimit     float32
 		expectedResult *SegmentDelta
-		aggregatorErr  error
+		estimatorErr   error
 		expectedErr    error
 	}{
-		"if the aggregator fails an error should be returned": {
-			delta:         &SegmentDelta{Velocity: 2},
-			aggregatorErr: errors.New("test"),
-			expectedErr:   errors.New("unable to aggregate :test"),
-			speedLimit:    3,
+		"if the estimator fails an error should be returned": {
+			delta:        &SegmentDelta{Velocity: 2},
+			estimatorErr: errors.New("test"),
+			expectedErr:  errors.New("unable to estimate :test"),
+			speedLimit:   3,
 		},
 		"should filter the speedy ones": {
 			speedLimit:     3,
@@ -36,14 +36,14 @@ func TestSpeedFilter(t *testing.T) {
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			var delta *SegmentDelta
-			aggregator := &aggregatorMock{AggregateFunc: func(d *SegmentDelta) error {
-				if tc.aggregatorErr == nil {
+			estimator := &estimatorMock{EstimateFunc: func(d *SegmentDelta) error {
+				if tc.estimatorErr == nil {
 					delta = d
 				}
-				return tc.aggregatorErr
+				return tc.estimatorErr
 			}}
 
-			filter := NewSpeedFilter(aggregator, tc.speedLimit)
+			filter := NewSpeedFilter(estimator, tc.speedLimit)
 
 			err := filter.Filter(tc.delta)
 			if fmt.Sprintf("%s", err) != fmt.Sprintf("%s", tc.expectedErr) {
