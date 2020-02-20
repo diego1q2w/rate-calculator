@@ -29,7 +29,7 @@ func NewAggregator(output output, flushInterval time.Duration, minFare float32, 
 	a := &Aggregator{
 		flushInterval: flushInterval,
 		flagFare:      flagFare,
-		finalFare:     make(finalFare, 0),
+		finalFare:     make(finalFare),
 		minFare:       minFare,
 		output:        output,
 	}
