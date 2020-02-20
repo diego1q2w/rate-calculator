@@ -4,6 +4,7 @@
 package app
 
 import (
+	"rate-calculator/pkg/domain"
 	"sync"
 )
 
@@ -21,7 +22,7 @@ var _ estimator = &estimatorMock{}
 //
 //         // make and configure a mocked estimator
 //         mockedestimator := &estimatorMock{
-//             EstimateFunc: func(delta *SegmentDelta) error {
+//             EstimateFunc: func(delta *domain.SegmentDelta) error {
 // 	               panic("mock out the Estimate method")
 //             },
 //         }
@@ -32,25 +33,25 @@ var _ estimator = &estimatorMock{}
 //     }
 type estimatorMock struct {
 	// EstimateFunc mocks the Estimate method.
-	EstimateFunc func(delta *SegmentDelta) error
+	EstimateFunc func(delta *domain.SegmentDelta) error
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// Estimate holds details about calls to the Estimate method.
 		Estimate []struct {
 			// Delta is the delta argument value.
-			Delta *SegmentDelta
+			Delta *domain.SegmentDelta
 		}
 	}
 }
 
 // Estimate calls EstimateFunc.
-func (mock *estimatorMock) Estimate(delta *SegmentDelta) error {
+func (mock *estimatorMock) Estimate(delta *domain.SegmentDelta) error {
 	if mock.EstimateFunc == nil {
 		panic("estimatorMock.EstimateFunc: method is nil but estimator.Estimate was just called")
 	}
 	callInfo := struct {
-		Delta *SegmentDelta
+		Delta *domain.SegmentDelta
 	}{
 		Delta: delta,
 	}
@@ -64,10 +65,10 @@ func (mock *estimatorMock) Estimate(delta *SegmentDelta) error {
 // Check the length with:
 //     len(mockedestimator.EstimateCalls())
 func (mock *estimatorMock) EstimateCalls() []struct {
-	Delta *SegmentDelta
+	Delta *domain.SegmentDelta
 } {
 	var calls []struct {
-		Delta *SegmentDelta
+		Delta *domain.SegmentDelta
 	}
 	lockestimatorMockEstimate.RLock()
 	calls = mock.calls.Estimate

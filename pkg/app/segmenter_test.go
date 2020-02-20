@@ -3,24 +3,25 @@ package app
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/umahmood/haversine"
+	"rate-calculator/pkg/domain"
 	"testing"
 	"time"
 )
 
 func TestSegmenter(t *testing.T) {
 	testCases := map[string]struct {
-		postitions       []*Position
-		expectedSegments []*SegmentDelta
+		postitions       []*domain.Position
+		expectedSegments []*domain.SegmentDelta
 	}{
 		"if not enough points nothing should happen": {
-			postitions: []*Position{
+			postitions: []*domain.Position{
 				{RideID: 1, Lat: 1, Long: 1, Timestamp: 1405589100},
 				{RideID: 2, Lat: 1, Long: 2, Timestamp: 1405589110},
 				{RideID: 3, Lat: 1, Long: 4, Timestamp: 1405589130},
 			},
-			expectedSegments: []*SegmentDelta{},
+			expectedSegments: []*domain.SegmentDelta{},
 		}, "should classify the segments correctly": {
-			postitions: []*Position{
+			postitions: []*domain.Position{
 				{RideID: 1, Lat: 1, Long: 1, Timestamp: 3600},
 				{RideID: 2, Lat: 1, Long: 2, Timestamp: 3600},
 				{RideID: 1, Lat: 2, Long: 3, Timestamp: 3600 * 2},
@@ -28,7 +29,7 @@ func TestSegmenter(t *testing.T) {
 				{RideID: 1, Lat: 3, Long: 5, Timestamp: 3600 * 4},
 				{RideID: 3, Lat: 2, Long: 6, Timestamp: 3600 * 7},
 			},
-			expectedSegments: []*SegmentDelta{
+			expectedSegments: []*domain.SegmentDelta{
 				{RideID: 1, Distance: 7, Duration: 1, Velocity: 7, Date: time.Date(1970, 1, 1, 1, 0, 0, 0, time.UTC)},
 				{RideID: 1, Distance: 13, Duration: 2, Velocity: 6.5, Date: time.Date(1970, 1, 1, 2, 0, 0, 0, time.UTC)},
 				{RideID: 3, Distance: 13, Duration: 5, Velocity: 2.6, Date: time.Date(1970, 1, 1, 2, 0, 0, 0, time.UTC)},
@@ -38,9 +39,9 @@ func TestSegmenter(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			deltaSegments := make([]*SegmentDelta, 0)
+			deltaSegments := make([]*domain.SegmentDelta, 0)
 			segmentFilter := &segmentFilterMock{
-				FilterFunc: func(delta *SegmentDelta) error {
+				FilterFunc: func(delta *domain.SegmentDelta) error {
 					deltaSegments = append(deltaSegments, delta)
 					return nil
 				},

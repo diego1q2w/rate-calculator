@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"rate-calculator/pkg/domain"
 	"time"
 )
 
@@ -10,9 +11,9 @@ type output interface {
 	Output([]*OutputFare) error
 }
 
-type finalFare map[RideID]float32
+type finalFare map[domain.RideID]float32
 type OutputFare struct {
-	ID   RideID
+	ID   domain.RideID
 	Fare float32
 }
 

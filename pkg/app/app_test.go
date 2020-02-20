@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/umahmood/haversine"
+	"rate-calculator/pkg/domain"
 	"sort"
 	"testing"
 	"time"
@@ -53,26 +54,26 @@ func TestAppFlow(t *testing.T) {
 
 func getEstimatorConfig(dayFare float32, nightFare float32, idleFare float32, speedLimitFare float32) []RateConfig {
 	return []RateConfig{
-		{Rule: func(delta *SegmentDelta) (b bool, m multiplier) {
+		{Rule: func(delta *domain.SegmentDelta) (b bool, m multiplier) {
 			start := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 5, 0, 0, 0, time.UTC) // 5:00 - 0
 			end := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 0, 0, 0, 0, time.UTC)
 			return delta.Velocity > speedLimitFare && inTimeSpan(start, end, delta.Date),
 				delta.Distance
 		}, Fare: dayFare},
-		{Rule: func(delta *SegmentDelta) (b bool, m multiplier) {
+		{Rule: func(delta *domain.SegmentDelta) (b bool, m multiplier) {
 			start := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 0, 0, 0, 0, time.UTC)
 			end := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 5, 0, 0, 0, time.UTC)
 			return delta.Velocity > speedLimitFare && inTimeSpan(start, end, delta.Date),
 				delta.Distance
 		}, Fare: nightFare},
-		{Rule: func(delta *SegmentDelta) (b bool, m multiplier) {
+		{Rule: func(delta *domain.SegmentDelta) (b bool, m multiplier) {
 			return delta.Velocity <= speedLimitFare, delta.Duration
 		}, Fare: idleFare},
 	}
 }
 
-func getInput() []*Position {
-	return []*Position{
+func getInput() []*domain.Position {
+	return []*domain.Position{
 		// Ride ID 1
 		{RideID: 1, Lat: 1, Long: 1, Timestamp: 3600},
 		{RideID: 1, Lat: 2, Long: 3, Timestamp: 3600 * 2},

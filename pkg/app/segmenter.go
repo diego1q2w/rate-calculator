@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/umahmood/haversine"
+	"rate-calculator/pkg/domain"
 	"time"
 )
 
@@ -18,7 +19,7 @@ func NewSegmenter(filter segmentFilter, distanceCalc distanceCalc, workers int) 
 	s := &Segmenter{
 		filter:       filter,
 		distanceCalc: distanceCalc,
-		rideSegment:  make(map[RideID]segment),
+		rideSegment:  make(map[domain.RideID]segment),
 	}
 	if workers > 0 {
 		s.spinWorkers(workers)
@@ -31,31 +32,22 @@ type distanceCalc = func(p, q haversine.Coord) (mi, km float64)
 
 //go:generate moq -out segment_filter_mock_test.go . segmentFilter
 type segmentFilter interface {
-	Filter(delta *SegmentDelta) error
+	Filter(delta *domain.SegmentDelta) error
 }
 
-type RideID uint64
-
-type Position struct {
-	RideID    RideID
-	Lat       float64
-	Long      float64
-	Timestamp int64
-}
-
-type rideSegment map[RideID]segment
+type rideSegment map[domain.RideID]segment
 
 type segment struct {
-	id RideID
-	p1 *Position
-	p2 *Position
+	id domain.RideID
+	p1 *domain.Position
+	p2 *domain.Position
 }
 
 func (s *segment) isReady() bool {
 	return s.p1 != nil && s.p2 != nil
 }
 
-func (s *segment) pushElement(position *Position) error {
+func (s *segment) pushElement(position *domain.Position) error {
 	if position == nil {
 		return errors.New("can not have a nil position")
 	}
@@ -71,8 +63,8 @@ func (s *segment) pushElement(position *Position) error {
 	return nil
 }
 
-func (s *segment) calculate(distanceCalc distanceCalc) (*SegmentDelta, error) {
-	sDelta := &SegmentDelta{
+func (s *segment) calculate(distanceCalc distanceCalc) (*domain.SegmentDelta, error) {
+	sDelta := &domain.SegmentDelta{
 		RideID: s.id,
 		Dirty:  false,
 		Date:   time.Unix(s.p1.Timestamp, 0).UTC(),
@@ -89,16 +81,7 @@ func (s *segment) calculate(distanceCalc distanceCalc) (*SegmentDelta, error) {
 	return sDelta, nil
 }
 
-type SegmentDelta struct {
-	RideID   RideID
-	Dirty    bool
-	Distance float32 //Km
-	Duration float32 // Hours
-	Date     time.Time
-	Velocity float32
-}
-
-func (s *Segmenter) Segment(position *Position) error {
+func (s *Segmenter) Segment(position *domain.Position) error {
 	rSegment, ok := s.rideSegment[position.RideID]
 	if !ok {
 		rSegment = segment{id: position.RideID}

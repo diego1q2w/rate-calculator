@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"rate-calculator/pkg/domain"
 )
 
 type multiplier = float32
@@ -12,12 +13,12 @@ type aggregator interface {
 }
 
 type RateConfig struct {
-	Rule func(*SegmentDelta) (bool, multiplier)
+	Rule func(*domain.SegmentDelta) (bool, multiplier)
 	Fare float32
 }
 
 type SegmentFare struct {
-	ID   RideID
+	ID   domain.RideID
 	Fare float32
 }
 
@@ -30,7 +31,7 @@ func NewEstimator(config []RateConfig, aggregator aggregator) *Estimator {
 	return &Estimator{rateConfigs: config, aggregator: aggregator}
 }
 
-func (e *Estimator) Estimate(delta *SegmentDelta) error {
+func (e *Estimator) Estimate(delta *domain.SegmentDelta) error {
 	finalRate := &SegmentFare{ID: delta.RideID, Fare: 0}
 
 	if delta.Dirty {

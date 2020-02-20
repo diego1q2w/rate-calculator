@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"rate-calculator/pkg/domain"
 	"testing"
 	"time"
 )
@@ -12,18 +13,18 @@ func TestEstimator(t *testing.T) {
 	testCases := map[string]struct {
 		aggregatorErr error
 		config        []RateConfig
-		deltas        []*SegmentDelta
+		deltas        []*domain.SegmentDelta
 		expectedFares []*SegmentFare
 		expectedErr   error
 	}{
 		"if the agggregator has an error then it should return an error": {
 			aggregatorErr: errors.New("test"),
 			expectedErr:   errors.New("unable to aggregate: test"),
-			deltas:        []*SegmentDelta{{Dirty: true}},
+			deltas:        []*domain.SegmentDelta{{Dirty: true}},
 			expectedFares: []*SegmentFare{},
 		},
 		"should assign the correct fares based on the rules": {
-			deltas: []*SegmentDelta{
+			deltas: []*domain.SegmentDelta{
 				{RideID: 1, Distance: 2, Velocity: 12, Duration: 1, Date: time.Date(1, 0, 0, 5, 0, 0, 0, time.UTC), Dirty: false},
 				{RideID: 2, Distance: 2, Velocity: 12, Duration: 1, Date: time.Date(1, 0, 0, 5, 0, 1, 0, time.UTC), Dirty: false},
 				{RideID: 3, Distance: 2, Velocity: 12, Duration: 1, Date: time.Date(1, 0, 0, 0, 0, 0, 0, time.UTC), Dirty: false},
@@ -32,19 +33,19 @@ func TestEstimator(t *testing.T) {
 				{RideID: 6, Distance: 2, Velocity: 10, Duration: 1, Date: time.Date(1, 0, 0, 0, 0, 1, 0, time.UTC), Dirty: true},
 			},
 			config: []RateConfig{
-				{Rule: func(delta *SegmentDelta) (b bool, m multiplier) {
+				{Rule: func(delta *domain.SegmentDelta) (b bool, m multiplier) {
 					start := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 5, 0, 0, 0, time.UTC) // 5:00 - 0
 					end := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 0, 0, 0, 0, time.UTC)
 					return delta.Velocity > 10 && inTimeSpan(start, end, delta.Date),
 						delta.Distance
 				}, Fare: 1},
-				{Rule: func(delta *SegmentDelta) (b bool, m multiplier) {
+				{Rule: func(delta *domain.SegmentDelta) (b bool, m multiplier) {
 					start := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 0, 0, 0, 0, time.UTC)
 					end := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 5, 0, 0, 0, time.UTC)
 					return delta.Velocity > 10 && inTimeSpan(start, end, delta.Date),
 						delta.Distance
 				}, Fare: 2},
-				{Rule: func(delta *SegmentDelta) (b bool, m multiplier) {
+				{Rule: func(delta *domain.SegmentDelta) (b bool, m multiplier) {
 					return delta.Velocity <= 10, delta.Duration
 				}, Fare: 3},
 			},
@@ -59,11 +60,11 @@ func TestEstimator(t *testing.T) {
 		},
 		"if no rules applicable should return an error": {
 			expectedErr: errors.New("unable to find a suitable rule for the rideID: 1"),
-			deltas: []*SegmentDelta{
+			deltas: []*domain.SegmentDelta{
 				{RideID: 1, Distance: 2, Velocity: 12, Duration: 1, Date: time.Date(2016, 1, 1, 5, 0, 0, 0, time.UTC), Dirty: false},
 			},
 			config: []RateConfig{
-				{Rule: func(delta *SegmentDelta) (b bool, m multiplier) {
+				{Rule: func(delta *domain.SegmentDelta) (b bool, m multiplier) {
 					return false, delta.Distance
 				}, Fare: 1},
 			},

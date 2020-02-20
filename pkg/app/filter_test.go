@@ -4,39 +4,40 @@ import (
 	"errors"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"rate-calculator/pkg/domain"
 	"testing"
 )
 
 func TestSpeedFilter(t *testing.T) {
 	testCases := map[string]struct {
-		delta          *SegmentDelta
+		delta          *domain.SegmentDelta
 		speedLimit     float32
-		expectedResult *SegmentDelta
+		expectedResult *domain.SegmentDelta
 		estimatorErr   error
 		expectedErr    error
 	}{
 		"if the estimator fails an error should be returned": {
-			delta:        &SegmentDelta{Velocity: 2},
+			delta:        &domain.SegmentDelta{Velocity: 2},
 			estimatorErr: errors.New("test"),
 			expectedErr:  errors.New("unable to estimate :test"),
 			speedLimit:   3,
 		},
 		"should filter the speedy ones": {
 			speedLimit:     3,
-			delta:          &SegmentDelta{Velocity: 4},
-			expectedResult: &SegmentDelta{Velocity: 4, Dirty: true},
+			delta:          &domain.SegmentDelta{Velocity: 4},
+			expectedResult: &domain.SegmentDelta{Velocity: 4, Dirty: true},
 		},
 		"should not filter the slow ones": {
 			speedLimit:     3,
-			delta:          &SegmentDelta{Velocity: 2},
-			expectedResult: &SegmentDelta{Velocity: 2, Dirty: false},
+			delta:          &domain.SegmentDelta{Velocity: 2},
+			expectedResult: &domain.SegmentDelta{Velocity: 2, Dirty: false},
 		},
 	}
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			var delta *SegmentDelta
-			estimator := &estimatorMock{EstimateFunc: func(d *SegmentDelta) error {
+			var delta *domain.SegmentDelta
+			estimator := &estimatorMock{EstimateFunc: func(d *domain.SegmentDelta) error {
 				if tc.estimatorErr == nil {
 					delta = d
 				}

@@ -4,6 +4,7 @@
 package app
 
 import (
+	"rate-calculator/pkg/domain"
 	"sync"
 )
 
@@ -21,7 +22,7 @@ var _ segmentFilter = &segmentFilterMock{}
 //
 //         // make and configure a mocked segmentFilter
 //         mockedsegmentFilter := &segmentFilterMock{
-//             FilterFunc: func(delta *SegmentDelta) error {
+//             FilterFunc: func(delta *domain.SegmentDelta) error {
 // 	               panic("mock out the Filter method")
 //             },
 //         }
@@ -32,25 +33,25 @@ var _ segmentFilter = &segmentFilterMock{}
 //     }
 type segmentFilterMock struct {
 	// FilterFunc mocks the Filter method.
-	FilterFunc func(delta *SegmentDelta) error
+	FilterFunc func(delta *domain.SegmentDelta) error
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// Filter holds details about calls to the Filter method.
 		Filter []struct {
 			// Delta is the delta argument value.
-			Delta *SegmentDelta
+			Delta *domain.SegmentDelta
 		}
 	}
 }
 
 // Filter calls FilterFunc.
-func (mock *segmentFilterMock) Filter(delta *SegmentDelta) error {
+func (mock *segmentFilterMock) Filter(delta *domain.SegmentDelta) error {
 	if mock.FilterFunc == nil {
 		panic("segmentFilterMock.FilterFunc: method is nil but segmentFilter.Filter was just called")
 	}
 	callInfo := struct {
-		Delta *SegmentDelta
+		Delta *domain.SegmentDelta
 	}{
 		Delta: delta,
 	}
@@ -64,10 +65,10 @@ func (mock *segmentFilterMock) Filter(delta *SegmentDelta) error {
 // Check the length with:
 //     len(mockedsegmentFilter.FilterCalls())
 func (mock *segmentFilterMock) FilterCalls() []struct {
-	Delta *SegmentDelta
+	Delta *domain.SegmentDelta
 } {
 	var calls []struct {
-		Delta *SegmentDelta
+		Delta *domain.SegmentDelta
 	}
 	locksegmentFilterMockFilter.RLock()
 	calls = mock.calls.Filter
