@@ -1,3 +1,5 @@
+github.com/bradfitz/slice v0.0.0-20180809154707-2b758aa73013 h1:/P9/RL0xgWE+ehnCUUN5h3RpG3dmoMCOONO1CCvq23Y=
+github.com/bradfitz/slice v0.0.0-20180809154707-2b758aa73013/go.mod h1:pccXHIvs3TV/TUqSNyEvF99sxjX2r4FFRIyw6TZY9+w=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
