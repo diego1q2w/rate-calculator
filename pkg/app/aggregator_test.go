@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/stretchr/testify/assert"
+	"rate-calculator/pkg/domain"
 	"sort"
 	"testing"
 	"time"
@@ -12,7 +13,7 @@ func TestAggregator(t *testing.T) {
 		segmentFare    []*SegmentFare
 		minimumFare    float32
 		flagFare       float32
-		expectedOutput []*OutputFare
+		expectedOutput []*domain.OutputFare
 	}{
 		"it should aggregate the fares correctly": {
 			segmentFare: []*SegmentFare{
@@ -34,7 +35,7 @@ func TestAggregator(t *testing.T) {
 			},
 			flagFare:    2,
 			minimumFare: 6,
-			expectedOutput: []*OutputFare{
+			expectedOutput: []*domain.OutputFare{
 				{ID: 1, Fare: 15},
 				{ID: 2, Fare: 6},
 				{ID: 3, Fare: 6},
@@ -49,8 +50,8 @@ func TestAggregator(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			var outputFares []*OutputFare
-			output := &outputMock{OutputFunc: func(f []*OutputFare) error {
+			var outputFares []*domain.OutputFare
+			output := &outputMock{OutputFunc: func(f []*domain.OutputFare) error {
 				sort.Slice(f, func(i, j int) bool {
 					return f[i].ID < f[j].ID
 				})

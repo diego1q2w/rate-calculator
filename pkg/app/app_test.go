@@ -22,8 +22,8 @@ func TestAppFlow(t *testing.T) {
 	var aggregatorWorkers = 2                 // The numer of workers used to aggregate the fare estimator, ideally they would be less than the segment
 	var flushInterval = time.Millisecond * 20 // The time it takes for a aggregator worker to send the acumulated data to the master aggregator
 
-	var outputFares []*OutputFare // Final fares
-	output := &outputMock{OutputFunc: func(f []*OutputFare) error {
+	var outputFares []*domain.OutputFare // Final fares
+	output := &outputMock{OutputFunc: func(f []*domain.OutputFare) error {
 		sort.Slice(f, func(i, j int) bool {
 			return f[i].ID < f[j].ID
 		})
@@ -112,8 +112,8 @@ func getInput() []*domain.Position {
 	}
 }
 
-func expectedOutput() []*OutputFare {
-	return []*OutputFare{
+func expectedOutput() []*domain.OutputFare {
+	return []*domain.OutputFare{
 		{ID: 1, Fare: 5},
 		{ID: 3, Fare: 6},
 		{ID: 4, Fare: 15},

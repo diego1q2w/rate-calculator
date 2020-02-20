@@ -8,14 +8,10 @@ import (
 
 //go:generate moq -out output_mock_test.go . output
 type output interface {
-	Output([]*OutputFare) error
+	Output([]*domain.OutputFare) error
 }
 
 type finalFare map[domain.RideID]float32
-type OutputFare struct {
-	ID   domain.RideID
-	Fare float32
-}
 
 type Aggregator struct {
 	finalFare     finalFare
@@ -88,12 +84,12 @@ func (a *Aggregator) masterAggregate(ch chan finalFare) {
 }
 
 func (a *Aggregator) outputData() {
-	var fareOutput = make([]*OutputFare, 0)
+	var fareOutput = make([]*domain.OutputFare, 0)
 	for rideID, fare := range a.finalFare {
 		if fare < a.minFare {
 			fare = a.minFare
 		}
-		fareOutput = append(fareOutput, &OutputFare{ID: rideID, Fare: fare})
+		fareOutput = append(fareOutput, &domain.OutputFare{ID: rideID, Fare: fare})
 	}
 
 	if err := a.output.Output(fareOutput); err != nil {

@@ -4,6 +4,7 @@
 package app
 
 import (
+	"rate-calculator/pkg/domain"
 	"sync"
 )
 
@@ -21,7 +22,7 @@ var _ output = &outputMock{}
 //
 //         // make and configure a mocked output
 //         mockedoutput := &outputMock{
-//             OutputFunc: func(in1 []*OutputFare) error {
+//             OutputFunc: func(in1 []*domain.OutputFare) error {
 // 	               panic("mock out the Output method")
 //             },
 //         }
@@ -32,25 +33,25 @@ var _ output = &outputMock{}
 //     }
 type outputMock struct {
 	// OutputFunc mocks the Output method.
-	OutputFunc func(in1 []*OutputFare) error
+	OutputFunc func(in1 []*domain.OutputFare) error
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// Output holds details about calls to the Output method.
 		Output []struct {
 			// In1 is the in1 argument value.
-			In1 []*OutputFare
+			In1 []*domain.OutputFare
 		}
 	}
 }
 
 // Output calls OutputFunc.
-func (mock *outputMock) Output(in1 []*OutputFare) error {
+func (mock *outputMock) Output(in1 []*domain.OutputFare) error {
 	if mock.OutputFunc == nil {
 		panic("outputMock.OutputFunc: method is nil but output.Output was just called")
 	}
 	callInfo := struct {
-		In1 []*OutputFare
+		In1 []*domain.OutputFare
 	}{
 		In1: in1,
 	}
@@ -64,10 +65,10 @@ func (mock *outputMock) Output(in1 []*OutputFare) error {
 // Check the length with:
 //     len(mockedoutput.OutputCalls())
 func (mock *outputMock) OutputCalls() []struct {
-	In1 []*OutputFare
+	In1 []*domain.OutputFare
 } {
 	var calls []struct {
-		In1 []*OutputFare
+		In1 []*domain.OutputFare
 	}
 	lockoutputMockOutput.RLock()
 	calls = mock.calls.Output

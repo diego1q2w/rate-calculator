@@ -19,3 +19,8 @@ type SegmentDelta struct {
 	Date     time.Time
 	Velocity float32
 }
+
+type OutputFare struct {
+	ID   RideID
+	Fare float32
+}
