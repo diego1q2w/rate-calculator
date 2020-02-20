@@ -11,18 +11,18 @@ type output interface {
 	Output([]*domain.OutputFare) error
 }
 
-type finalFare map[domain.RideID]float32
+type finalFare map[domain.RideID]domain.Fare
 
 type Aggregator struct {
 	finalFare     finalFare
 	flushInterval time.Duration
-	flagFare      float32
-	minFare       float32
+	flagFare      domain.Fare
+	minFare       domain.Fare
 	output        output
 	workerCh      chan *SegmentFare
 }
 
-func NewAggregator(output output, flushInterval time.Duration, minFare float32, flagFare float32, workers int) *Aggregator {
+func NewAggregator(output output, flushInterval time.Duration, minFare, flagFare domain.Fare, workers int) *Aggregator {
 	a := &Aggregator{
 		flushInterval: flushInterval,
 		flagFare:      flagFare,

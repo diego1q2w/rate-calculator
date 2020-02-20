@@ -11,8 +11,8 @@ import (
 func TestAggregator(t *testing.T) {
 	testCases := map[string]struct {
 		segmentFare    []*SegmentFare
-		minimumFare    float32
-		flagFare       float32
+		minimumFare    domain.Fare
+		flagFare       domain.Fare
 		expectedOutput []*domain.OutputFare
 	}{
 		"it should aggregate the fares correctly": {

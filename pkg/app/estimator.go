@@ -14,12 +14,12 @@ type aggregator interface {
 
 type RateConfig struct {
 	Rule func(*domain.SegmentDelta) (bool, multiplier)
-	Fare float32
+	Fare domain.Fare
 }
 
 type SegmentFare struct {
 	ID   domain.RideID
-	Fare float32
+	Fare domain.Fare
 }
 
 type Estimator struct {
@@ -41,7 +41,7 @@ func (e *Estimator) Estimate(delta *domain.SegmentDelta) error {
 	for _, config := range e.rateConfigs {
 		ok, mult := config.Rule(delta)
 		if ok {
-			finalRate.Fare = mult * config.Fare
+			finalRate.Fare = domain.Fare(mult * float32(config.Fare))
 			return e.sendToAggregate(finalRate)
 		}
 	}

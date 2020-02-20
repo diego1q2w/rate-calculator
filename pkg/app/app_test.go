@@ -11,11 +11,11 @@ import (
 
 // It tests the whole flow
 func TestAppFlow(t *testing.T) {
-	var minFare float32 = 5.0                 // Minimal fare
-	var flagFare float32 = 1.0                // Fare you get each ride
-	var nightFare float32 = 1.0               // Fare you get during the night
-	var dayFare float32 = 1.0                 // Fare you get during the day
-	var idleFare float32 = 1.0                // Fare you get when you are either stop or driving to slow
+	var minFare domain.Fare = 5.0             // Minimal fare
+	var flagFare domain.Fare = 1.0            // Fare you get each ride
+	var nightFare domain.Fare = 1.0           // Fare you get during the night
+	var dayFare domain.Fare = 1.0             // Fare you get during the day
+	var idleFare domain.Fare = 1.0            // Fare you get when you are either stop or driving to slow
 	var speedLimitFare float32 = 10.0         // Speed limit for the idle fare
 	var speedLimitFilter float32 = 20.0       // Speed limit for the point to be filtered
 	var segmenterWorkers = 4                  // The number of workers used for the segmentation, filter and fare estimator process
@@ -52,7 +52,7 @@ func TestAppFlow(t *testing.T) {
 	assert.Equal(t, expectedOutput(), outputFares)
 }
 
-func getEstimatorConfig(dayFare float32, nightFare float32, idleFare float32, speedLimitFare float32) []RateConfig {
+func getEstimatorConfig(dayFare, nightFare, idleFare domain.Fare, speedLimitFare float32) []RateConfig {
 	return []RateConfig{
 		{Rule: func(delta *domain.SegmentDelta) (b bool, m multiplier) {
 			start := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 5, 0, 0, 0, time.UTC) // 5:00 - 0

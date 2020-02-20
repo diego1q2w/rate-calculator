@@ -3,6 +3,7 @@ package domain
 import "time"
 
 type RideID uint64
+type Fare float32
 
 type Position struct {
 	RideID    RideID
@@ -22,5 +23,5 @@ type SegmentDelta struct {
 
 type OutputFare struct {
 	ID   RideID
-	Fare float32
+	Fare Fare
 }
