@@ -16,13 +16,13 @@ type segmenter interface {
 }
 
 type FileReader struct {
-	segmenter  segmenter
-	filePath   string
-	lineLength int
+	segmenter   segmenter
+	filePath    string
+	fieldLength int
 }
 
-func NewFileReader(segmenter segmenter, filePath string, lineLength int) *FileReader {
-	return &FileReader{segmenter: segmenter, filePath: filePath, lineLength: lineLength}
+func NewFileReader(segmenter segmenter, filePath string, fieldLenght int) *FileReader {
+	return &FileReader{segmenter: segmenter, filePath: filePath, fieldLength: fieldLenght}
 }
 
 func (f *FileReader) Process() error {
@@ -38,8 +38,8 @@ func (f *FileReader) Process() error {
 		} else if err != nil {
 			return fmt.Errorf("unable to read line: %w", err)
 		}
-		if f.lineLength > len(line) {
-			return fmt.Errorf("fields count expected to be at least %d, got %d", f.lineLength, len(line))
+		if f.fieldLength > len(line) {
+			return fmt.Errorf("fields count expected to be at least %d, got %d", f.fieldLength, len(line))
 		}
 
 		if err := f.process(line); err != nil {

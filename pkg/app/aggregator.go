@@ -63,6 +63,9 @@ func (a *Aggregator) aggregate(aggregateCh chan finalFare) {
 				fFare[fare.ID] = fare.Fare
 			}
 		case <-flush:
+			if len(fFare) == 0 {
+				continue
+			}
 			aggregateCh <- fFare
 			fFare = make(finalFare)
 		}
