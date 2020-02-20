@@ -19,7 +19,7 @@ type Aggregator struct {
 	flagFare      domain.Fare
 	minFare       domain.Fare
 	output        output
-	workerCh      chan *SegmentFare
+	workerCh      chan *domain.SegmentFare
 }
 
 func NewAggregator(output output, flushInterval time.Duration, minFare, flagFare domain.Fare, workers int) *Aggregator {
@@ -43,7 +43,7 @@ func NewAggregator(output output, flushInterval time.Duration, minFare, flagFare
 // - First is send to a "cluster" of workers where each worker would have its own count
 // - Secondly and every now and then those workers are flushed into a single go routine where the final count is calculated
 // and output, giving us the ability to process them without using mutex and blocking the routine
-func (a *Aggregator) Aggregate(f *SegmentFare) error {
+func (a *Aggregator) Aggregate(f *domain.SegmentFare) error {
 	a.workerCh <- f
 
 	return nil
@@ -98,7 +98,7 @@ func (a *Aggregator) outputData() {
 }
 
 func (a *Aggregator) spinWorkers(numberOfWorkers int) chan finalFare {
-	workerCh := make(chan *SegmentFare)
+	workerCh := make(chan *domain.SegmentFare)
 	aggregateCh := make(chan finalFare)
 	a.workerCh = workerCh
 	for i := 0; i < numberOfWorkers; i++ {

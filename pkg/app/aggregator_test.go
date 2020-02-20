@@ -10,13 +10,13 @@ import (
 
 func TestAggregator(t *testing.T) {
 	testCases := map[string]struct {
-		segmentFare    []*SegmentFare
+		segmentFare    []*domain.SegmentFare
 		minimumFare    domain.Fare
 		flagFare       domain.Fare
 		expectedOutput []*domain.OutputFare
 	}{
 		"it should aggregate the fares correctly": {
-			segmentFare: []*SegmentFare{
+			segmentFare: []*domain.SegmentFare{
 				{ID: 1, Fare: 10},
 				{ID: 1, Fare: 2},
 				{ID: 1, Fare: 1},

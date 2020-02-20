@@ -9,16 +9,11 @@ type multiplier = float32
 
 //go:generate moq -out aggregator_mock_test.go . aggregator
 type aggregator interface {
-	Aggregate(*SegmentFare) error
+	Aggregate(*domain.SegmentFare) error
 }
 
 type RateConfig struct {
 	Rule func(*domain.SegmentDelta) (bool, multiplier)
-	Fare domain.Fare
-}
-
-type SegmentFare struct {
-	ID   domain.RideID
 	Fare domain.Fare
 }
 
@@ -32,7 +27,7 @@ func NewEstimator(config []RateConfig, aggregator aggregator) *Estimator {
 }
 
 func (e *Estimator) Estimate(delta *domain.SegmentDelta) error {
-	finalRate := &SegmentFare{ID: delta.RideID, Fare: 0}
+	finalRate := &domain.SegmentFare{ID: delta.RideID, Fare: 0}
 
 	if delta.Dirty {
 		return e.sendToAggregate(finalRate)
@@ -49,7 +44,7 @@ func (e *Estimator) Estimate(delta *domain.SegmentDelta) error {
 	return fmt.Errorf("unable to find a suitable rule for the rideID: %d", delta.RideID)
 }
 
-func (e *Estimator) sendToAggregate(finalRate *SegmentFare) error {
+func (e *Estimator) sendToAggregate(finalRate *domain.SegmentFare) error {
 	if err := e.aggregator.Aggregate(finalRate); err != nil {
 		return fmt.Errorf("unable to aggregate: %w", err)
 	}

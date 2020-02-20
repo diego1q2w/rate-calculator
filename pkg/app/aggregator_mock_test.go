@@ -4,6 +4,7 @@
 package app
 
 import (
+	"rate-calculator/pkg/domain"
 	"sync"
 )
 
@@ -21,7 +22,7 @@ var _ aggregator = &aggregatorMock{}
 //
 //         // make and configure a mocked aggregator
 //         mockedaggregator := &aggregatorMock{
-//             AggregateFunc: func(in1 *SegmentFare) error {
+//             AggregateFunc: func(in1 *domain.SegmentFare) error {
 // 	               panic("mock out the Aggregate method")
 //             },
 //         }
@@ -32,25 +33,25 @@ var _ aggregator = &aggregatorMock{}
 //     }
 type aggregatorMock struct {
 	// AggregateFunc mocks the Aggregate method.
-	AggregateFunc func(in1 *SegmentFare) error
+	AggregateFunc func(in1 *domain.SegmentFare) error
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// Aggregate holds details about calls to the Aggregate method.
 		Aggregate []struct {
 			// In1 is the in1 argument value.
-			In1 *SegmentFare
+			In1 *domain.SegmentFare
 		}
 	}
 }
 
 // Aggregate calls AggregateFunc.
-func (mock *aggregatorMock) Aggregate(in1 *SegmentFare) error {
+func (mock *aggregatorMock) Aggregate(in1 *domain.SegmentFare) error {
 	if mock.AggregateFunc == nil {
 		panic("aggregatorMock.AggregateFunc: method is nil but aggregator.Aggregate was just called")
 	}
 	callInfo := struct {
-		In1 *SegmentFare
+		In1 *domain.SegmentFare
 	}{
 		In1: in1,
 	}
@@ -64,10 +65,10 @@ func (mock *aggregatorMock) Aggregate(in1 *SegmentFare) error {
 // Check the length with:
 //     len(mockedaggregator.AggregateCalls())
 func (mock *aggregatorMock) AggregateCalls() []struct {
-	In1 *SegmentFare
+	In1 *domain.SegmentFare
 } {
 	var calls []struct {
-		In1 *SegmentFare
+		In1 *domain.SegmentFare
 	}
 	lockaggregatorMockAggregate.RLock()
 	calls = mock.calls.Aggregate

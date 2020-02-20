@@ -14,14 +14,14 @@ func TestEstimator(t *testing.T) {
 		aggregatorErr error
 		config        []RateConfig
 		deltas        []*domain.SegmentDelta
-		expectedFares []*SegmentFare
+		expectedFares []*domain.SegmentFare
 		expectedErr   error
 	}{
 		"if the agggregator has an error then it should return an error": {
 			aggregatorErr: errors.New("test"),
 			expectedErr:   errors.New("unable to aggregate: test"),
 			deltas:        []*domain.SegmentDelta{{Dirty: true}},
-			expectedFares: []*SegmentFare{},
+			expectedFares: []*domain.SegmentFare{},
 		},
 		"should assign the correct fares based on the rules": {
 			deltas: []*domain.SegmentDelta{
@@ -49,7 +49,7 @@ func TestEstimator(t *testing.T) {
 					return delta.Velocity <= 10, delta.Duration
 				}, Fare: 3},
 			},
-			expectedFares: []*SegmentFare{
+			expectedFares: []*domain.SegmentFare{
 				{ID: 1, Fare: 4},
 				{ID: 2, Fare: 2},
 				{ID: 3, Fare: 2},
@@ -68,14 +68,14 @@ func TestEstimator(t *testing.T) {
 					return false, delta.Distance
 				}, Fare: 1},
 			},
-			expectedFares: []*SegmentFare{},
+			expectedFares: []*domain.SegmentFare{},
 		},
 	}
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			segmentFares := make([]*SegmentFare, 0)
-			aggregator := &aggregatorMock{AggregateFunc: func(s *SegmentFare) error {
+			segmentFares := make([]*domain.SegmentFare, 0)
+			aggregator := &aggregatorMock{AggregateFunc: func(s *domain.SegmentFare) error {
 				if tc.aggregatorErr == nil {
 					segmentFares = append(segmentFares, s)
 				}
