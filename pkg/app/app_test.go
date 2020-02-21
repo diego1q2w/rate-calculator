@@ -48,7 +48,7 @@ func TestAppFlow(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	time.Sleep(time.Millisecond * 150)
+	<-aggregator.Running()
 	assert.Equal(t, expectedOutput(), outputFares)
 }
 

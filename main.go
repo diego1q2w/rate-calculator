@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"github.com/umahmood/haversine"
 	"os"
@@ -51,7 +50,8 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Printf("The input file has been processed, due to the concurrency the process may take few moments more \n")
-	<-context.Background().Done()
+	<-aggregator.Running()
+	fmt.Printf("Process finished \n")
 }
 
 func getEstimatorConfig(dayFare, nightFare, idleFare domain.Fare, speedLimitFare float32) []app.RateConfig {

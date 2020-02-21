@@ -59,13 +59,13 @@ func TestAggregator(t *testing.T) {
 				return nil
 			}}
 
-			aggregator := NewAggregator(output, time.Millisecond*20, tc.minimumFare, tc.flagFare, 4)
+			aggregator := NewAggregator(output, time.Millisecond*2, tc.minimumFare, tc.flagFare, 200)
 			for _, f := range tc.segmentFare {
 				err := aggregator.Aggregate(f)
 				assert.NoError(t, err)
 			}
 
-			time.Sleep(time.Millisecond * 100)
+			<-aggregator.Running()
 
 			assert.Equal(t, tc.expectedOutput, outputFares)
 		})

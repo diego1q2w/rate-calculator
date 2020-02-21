@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"rate-calculator/pkg/domain"
+	"sync"
 	"time"
 )
 
@@ -11,24 +12,31 @@ type output interface {
 	Output([]*domain.OutputFare) error
 }
 
+const maxNumberOfEmptyFlushes = 3
+
 type finalFare map[domain.RideID]domain.Fare
 
 type Aggregator struct {
-	finalFare     finalFare
-	flushInterval time.Duration
-	flagFare      domain.Fare
-	minFare       domain.Fare
-	output        output
-	workerCh      chan *domain.SegmentFare
+	finalFare      finalFare
+	flushInterval  time.Duration
+	flagFare       domain.Fare
+	minFare        domain.Fare
+	output         output
+	runningWorkers int
+	mux            sync.Mutex // This is for the runningWorkers in order to know when the process is finished
+	workerCh       chan *domain.SegmentFare
+	terminateCh    chan struct{}
 }
 
 func NewAggregator(output output, flushInterval time.Duration, minFare, flagFare domain.Fare, workers int) *Aggregator {
 	a := &Aggregator{
-		flushInterval: flushInterval,
-		flagFare:      flagFare,
-		finalFare:     make(finalFare),
-		minFare:       minFare,
-		output:        output,
+		flushInterval:  flushInterval,
+		flagFare:       flagFare,
+		finalFare:      make(finalFare),
+		minFare:        minFare,
+		output:         output,
+		runningWorkers: 0,
+		terminateCh:    make(chan struct{}),
 	}
 
 	if workers > 0 {
@@ -50,10 +58,26 @@ func (a *Aggregator) Aggregate(f *domain.SegmentFare) error {
 }
 
 // We aggregate indepenedntly in different go routines and then we flush every now and then it into a single routine,
-// thanks to that we dont have to use Mutex while we ensure the unique increment of fares :D
+// thanks to that we dont have to use Mutex while we ensure the unique increment of fares :D.
+// Once no more data is there to process we kill goroutine
 func (a *Aggregator) aggregate(aggregateCh chan finalFare) {
+	a.mux.Lock()
+	a.runningWorkers++
+	a.mux.Unlock()
+
 	fFare := make(finalFare)
-	flush := time.Tick(a.flushInterval)
+	flush := time.NewTicker(a.flushInterval)
+	emptyFlushes := 0
+
+	defer func() {
+		a.mux.Lock()
+		defer a.mux.Unlock()
+		a.runningWorkers--
+		if a.runningWorkers == 0 {
+			time.Sleep(time.Millisecond * 100) // Grace period
+			a.terminateCh <- struct{}{}
+		}
+	}()
 	for {
 		select {
 		case fare := <-a.workerCh:
@@ -62,8 +86,13 @@ func (a *Aggregator) aggregate(aggregateCh chan finalFare) {
 			} else {
 				fFare[fare.ID] = fare.Fare
 			}
-		case <-flush:
+		case <-flush.C:
 			if len(fFare) == 0 {
+				emptyFlushes++
+				if emptyFlushes >= maxNumberOfEmptyFlushes {
+					return
+				}
+
 				continue
 			}
 			aggregateCh <- fFare
@@ -86,6 +115,10 @@ func (a *Aggregator) masterAggregate(ch chan finalFare) {
 	}
 }
 
+func (a *Aggregator) Running() <-chan struct{} {
+	return a.terminateCh
+}
+
 func (a *Aggregator) outputData() {
 	var fareOutput = make([]*domain.OutputFare, 0)
 	for rideID, fare := range a.finalFare {
@@ -96,7 +129,7 @@ func (a *Aggregator) outputData() {
 	}
 
 	if err := a.output.Output(fareOutput); err != nil {
-		fmt.Println("unable to output final fares")
+		fmt.Printf("unable to output final result: %s\n", err)
 	}
 }
 
