@@ -129,7 +129,8 @@ func (a *Aggregator) outputData() {
 	}
 
 	if err := a.output.Output(fareOutput); err != nil {
-		fmt.Printf("unable to output final result: %s\n", err)
+		a.terminateCh <- struct{}{}
+		fmt.Printf("Error: unable to output final result: %s\n", err)
 	}
 }
 
