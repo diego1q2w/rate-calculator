@@ -14,8 +14,8 @@ func TestAppFlow(t *testing.T) {
 	var minFare domain.Fare = 5.0             // Minimal fare
 	var flagFare domain.Fare = 1.0            // Fare you get each ride
 	var nightFare domain.Fare = 1.0           // Fare you get during the night
-	var dayFare domain.Fare = 1.0             // Fare you get during the day
-	var idleFare domain.Fare = 1.0            // Fare you get when you are either stop or driving to slow
+	var dayFare domain.Fare = 2.0             // Fare you get during the day
+	var idleFare domain.Fare = 1.5            // Fare you get when you are either stop or driving to slow
 	var speedLimitFare float32 = 10.0         // Speed limit for the idle fare
 	var speedLimitFilter float32 = 20.0       // Speed limit for the point to be filtered
 	var segmenterWorkers = 4                  // The number of workers used for the segmentation, filter and fare estimator process
@@ -114,13 +114,13 @@ func getInput() []*domain.Position {
 
 func expectedOutput() []*domain.OutputFare {
 	return []*domain.OutputFare{
-		{ID: 1, Fare: 5},
-		{ID: 3, Fare: 6},
+		{ID: 1, Fare: 5.5},
+		{ID: 3, Fare: 8.5},
 		{ID: 4, Fare: 15},
-		{ID: 5, Fare: 5},
-		{ID: 6, Fare: 9},
-		{ID: 7, Fare: 23},
-		{ID: 8, Fare: 34},
+		{ID: 5, Fare: 7},
+		{ID: 6, Fare: 13},
+		{ID: 7, Fare: 26},
+		{ID: 8, Fare: 65},
 		{ID: 9, Fare: 5},
 	}
 }

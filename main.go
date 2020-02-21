@@ -56,21 +56,22 @@ func main() {
 
 func getEstimatorConfig(dayFare, nightFare, idleFare domain.Fare, speedLimitFare float32) []app.RateConfig {
 	return []app.RateConfig{
-		{Rule: func(delta *domain.SegmentDelta) (b bool, m multiplier) {
-			start := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 5, 0, 0, 0, time.UTC) // 5:00 - 0
-			end := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 0, 0, 0, 0, time.UTC)
-			return delta.Velocity > speedLimitFare && inTimeSpan(start, end, delta.Date),
-				delta.Distance
-		}, Fare: dayFare},
-		{Rule: func(delta *domain.SegmentDelta) (b bool, m multiplier) {
-			start := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 0, 0, 0, 0, time.UTC)
-			end := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 5, 0, 0, 0, time.UTC)
-			return delta.Velocity > speedLimitFare && inTimeSpan(start, end, delta.Date),
-				delta.Distance
-		}, Fare: nightFare},
-		{Rule: func(delta *domain.SegmentDelta) (b bool, m multiplier) {
-			return delta.Velocity <= speedLimitFare, delta.Duration
-		}, Fare: idleFare},
+		{
+			Rule: func(delta *domain.SegmentDelta) (b bool, m multiplier) { // > 10 Km/H (05:00 - 00:00]
+				start := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 5, 0, 0, 0, time.UTC)
+				end := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 0, 0, 0, 0, time.UTC)
+				return delta.Velocity > speedLimitFare && inTimeSpan(start, end, delta.Date), delta.Distance
+			}, Fare: dayFare},
+		{
+			Rule: func(delta *domain.SegmentDelta) (b bool, m multiplier) { // > 10 Km/H (00:00 - 05:00]
+				start := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 0, 0, 0, 0, time.UTC)
+				end := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 5, 0, 0, 0, time.UTC)
+				return delta.Velocity > speedLimitFare && inTimeSpan(start, end, delta.Date), delta.Distance
+			}, Fare: nightFare},
+		{
+			Rule: func(delta *domain.SegmentDelta) (b bool, m multiplier) { // <= 10 Km/H
+				return delta.Velocity <= speedLimitFare, delta.Duration
+			}, Fare: idleFare},
 	}
 }
 
