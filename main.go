@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/umahmood/haversine"
+	"log"
 	"os"
 	"rate-calculator/pkg/estimator/api"
 	"rate-calculator/pkg/estimator/app"
@@ -12,7 +13,6 @@ import (
 
 const (
 	// File
-	csvPath        = "./paths.csv" //TODO: add the posiblity to inject it through arguments
 	outputPath     = "./output.txt"
 	csvFieldLength = 4
 
@@ -38,6 +38,10 @@ const (
 )
 
 func main() {
+	if len(os.Args) < 2 {
+		log.Fatal("One argument is required which is the directory path you wish to sync")
+	}
+
 	outputFile := output.NewFileOutput(outputPath)
 
 	dayRule := app.TimeRule{Start: dayStart, Finish: dayFinish, Fare: dayFare}
@@ -45,8 +49,7 @@ func main() {
 	speedRule := app.SpeedRule{Limit: idleSpeedLimit, Fare: idleFare}
 	estimatorConfig, err := app.GetEstimatorConfig(dayRule, nightRule, speedRule)
 	if err != nil {
-		fmt.Println("Error:", err)
-		os.Exit(1)
+		log.Fatal("Error: ", err)
 	}
 
 	aggregator := app.NewAggregator(outputFile, flushInterval, minFare, flagFare, aggregatorWorkers)
@@ -54,12 +57,12 @@ func main() {
 	filter := app.NewSpeedFilter(estimator, speedLimit)
 	segmenter := app.NewSegmenter(filter, haversine.Distance, segmenterWorkers)
 
-	fileReader := api.NewFileReader(segmenter, csvPath, csvFieldLength)
+	fileReader := api.NewFileReader(segmenter, os.Args[1], csvFieldLength)
 
 	fmt.Printf("Process has started, the output will appear in the file: %s. \n", outputFile)
 	if err := fileReader.Process(); err != nil {
-		fmt.Println("Error:", err)
-		os.Exit(1)
+		log.Fatal("Error: ", err)
+
 	}
 	fmt.Printf("The input file has been processed, due to the concurrency the process may take few moments more \n")
 	<-aggregator.Running()

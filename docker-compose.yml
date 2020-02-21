@@ -8,6 +8,7 @@ services:
     volumes:
       - .:/app
       - pkg:/go/pkg
+    command: ["go", "run", "main.go", "./paths.csv"]
 
 volumes:
   pkg:
