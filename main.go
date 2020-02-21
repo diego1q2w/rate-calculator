@@ -18,7 +18,7 @@ const (
 
 	//Concurrency set up
 	segmenterWorkers  = 15
-	aggregatorWorkers = 5
+	aggregatorWorkers = 4 // This has to be smaller than the previous one, as it aggregates independently
 	flushInterval     = time.Millisecond * 200
 
 	//App variables
