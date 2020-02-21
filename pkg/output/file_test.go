@@ -32,6 +32,20 @@ func TestFileOutput(t *testing.T) {
 	assert.Equal(t, expectedOutput, content)
 }
 
+func TestOpenFileError_Error(t *testing.T) {
+	outputFares := []*domain.OutputFare{
+		{ID: 1, Fare: 1},
+		{ID: 2, Fare: 2},
+		{ID: 3, Fare: 3},
+	}
+
+	filePath := "./random-wrong/test.txt"
+
+	output := NewFileOutput(filePath)
+	err := output.Output(outputFares)
+	assert.EqualError(t, err, "open ./random-wrong/test.txt: no such file or directory")
+}
+
 func readFileContent(t *testing.T, path string) string {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {

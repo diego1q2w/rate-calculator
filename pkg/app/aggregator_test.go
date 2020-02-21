@@ -1,8 +1,10 @@
 package app
 
 import (
+	"errors"
 	"github.com/stretchr/testify/assert"
 	"rate-calculator/pkg/domain"
+	fileOutput "rate-calculator/pkg/output"
 	"sort"
 	"testing"
 	"time"
@@ -13,6 +15,7 @@ func TestAggregator(t *testing.T) {
 		segmentFare    []*domain.SegmentFare
 		minimumFare    domain.Fare
 		flagFare       domain.Fare
+		outputErr      error
 		expectedOutput []*domain.OutputFare
 	}{
 		"it should aggregate the fares correctly": {
@@ -46,17 +49,32 @@ func TestAggregator(t *testing.T) {
 				{ID: 12, Fare: 10},
 			},
 		},
+		"if error creating file the process should be terminated": {
+			segmentFare: []*domain.SegmentFare{
+				{ID: 1, Fare: 10},
+				{ID: 1, Fare: 2},
+				{ID: 1, Fare: 1},
+				{ID: 2, Fare: 3},
+				{ID: 3, Fare: 4},
+				{ID: 4, Fare: 8},
+			},
+			outputErr:   fileOutput.NewOpenFileError(errors.New("test")),
+			flagFare:    2,
+			minimumFare: 6,
+		},
 	}
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			var outputFares []*domain.OutputFare
 			output := &outputMock{OutputFunc: func(f []*domain.OutputFare) error {
-				sort.Slice(f, func(i, j int) bool {
-					return f[i].ID < f[j].ID
-				})
-				outputFares = f
-				return nil
+				if tc.outputErr == nil {
+					sort.Slice(f, func(i, j int) bool {
+						return f[i].ID < f[j].ID
+					})
+					outputFares = f
+				}
+				return tc.outputErr
 			}}
 
 			aggregator := NewAggregator(output, time.Millisecond*2, tc.minimumFare, tc.flagFare, 200)

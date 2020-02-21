@@ -18,8 +18,9 @@ func NewFileOutput(filePath string) *FileOutput {
 func (o *FileOutput) Output(output []*domain.OutputFare) error {
 	file, err := os.Create(o.filePath)
 	if err != nil {
-		return fmt.Errorf("unable to open file: %w", err)
+		return NewOpenFileError(err)
 	}
+
 	defer file.Close()
 	w := bufio.NewWriter(file)
 	defer w.Flush()

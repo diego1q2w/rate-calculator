@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"rate-calculator/pkg/domain"
+	fileOutput "rate-calculator/pkg/output"
 	"sync"
 	"time"
 )
@@ -129,7 +130,10 @@ func (a *Aggregator) outputData() {
 	}
 
 	if err := a.output.Output(fareOutput); err != nil {
-		a.terminateCh <- struct{}{}
+		if serr, ok := err.(*fileOutput.OpenFileError); ok {
+			a.terminateCh <- struct{}{}
+			fmt.Printf("Error while opening file: %s\n", serr)
+		}
 		fmt.Printf("Error: unable to output final result: %s\n", err)
 	}
 }
