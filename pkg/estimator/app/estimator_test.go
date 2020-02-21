@@ -33,19 +33,19 @@ func TestEstimator(t *testing.T) {
 				{RideID: 6, Distance: 2, Velocity: 10, Duration: 1, Date: time.Date(1, 0, 0, 0, 0, 1, 0, time.UTC), Dirty: true},
 			},
 			config: []RateConfig{
-				{Rule: func(delta *domain.SegmentDelta) (b bool, m multiplier) {
+				{Rule: func(delta *domain.SegmentDelta) (b bool, m float32) {
 					start := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 5, 0, 0, 0, time.UTC) // 5:00 - 0
 					end := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 0, 0, 0, 0, time.UTC)
-					return delta.Velocity > 10 && inTimeSpan(start, end, delta.Date),
+					return delta.Velocity > 10 && inTimeSpanT(start, end, delta.Date),
 						delta.Distance
 				}, Fare: 1},
-				{Rule: func(delta *domain.SegmentDelta) (b bool, m multiplier) {
+				{Rule: func(delta *domain.SegmentDelta) (b bool, m float32) {
 					start := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 0, 0, 0, 0, time.UTC)
 					end := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 5, 0, 0, 0, time.UTC)
-					return delta.Velocity > 10 && inTimeSpan(start, end, delta.Date),
+					return delta.Velocity > 10 && inTimeSpanT(start, end, delta.Date),
 						delta.Distance
 				}, Fare: 2},
-				{Rule: func(delta *domain.SegmentDelta) (b bool, m multiplier) {
+				{Rule: func(delta *domain.SegmentDelta) (b bool, m float32) {
 					return delta.Velocity <= 10, delta.Duration
 				}, Fare: 3},
 			},
@@ -64,7 +64,7 @@ func TestEstimator(t *testing.T) {
 				{RideID: 1, Distance: 2, Velocity: 12, Duration: 1, Date: time.Date(2016, 1, 1, 5, 0, 0, 0, time.UTC), Dirty: false},
 			},
 			config: []RateConfig{
-				{Rule: func(delta *domain.SegmentDelta) (b bool, m multiplier) {
+				{Rule: func(delta *domain.SegmentDelta) (b bool, m float32) {
 					return false, delta.Distance
 				}, Fare: 1},
 			},
@@ -100,7 +100,7 @@ func TestEstimator(t *testing.T) {
 }
 
 // Non inclusive start
-func inTimeSpan(start, end, check time.Time) bool {
+func inTimeSpanT(start, end, check time.Time) bool {
 	if start.Before(end) {
 		return check.After(start) && !check.After(end)
 	}

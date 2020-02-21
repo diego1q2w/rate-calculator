@@ -79,7 +79,7 @@ func TestAggregator(t *testing.T) {
 
 			aggregator := NewAggregator(output, 4*time.Millisecond, tc.minimumFare, tc.flagFare, 200)
 			for _, f := range tc.segmentFare {
-				time.Sleep(2 * time.Millisecond)
+				time.Sleep(2 * time.Millisecond) // Emulating a mild delay in the data input
 				err := aggregator.Aggregate(f)
 				assert.NoError(t, err)
 			}

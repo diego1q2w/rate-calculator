@@ -21,6 +21,11 @@ func TestAppFlow(t *testing.T) {
 	var segmenterWorkers = 4                  // The number of workers used for the segmentation, filter and fare estimator process
 	var aggregatorWorkers = 2                 // The numer of workers used to aggregate the fare estimator, ideally they would be less than the segment
 	var flushInterval = time.Millisecond * 20 // The time it takes for a aggregator worker to send the acumulated data to the master aggregator
+	//Time fares
+	var dayStart = "05:00"
+	var dayFinish = "00:00"
+	var nightStart = "00:00"
+	var nightFinish = "05:00"
 
 	var outputFares []*domain.OutputFare // Final fares
 	output := &outputMock{OutputFunc: func(f []*domain.OutputFare) error {
@@ -36,9 +41,15 @@ func TestAppFlow(t *testing.T) {
 		return 0, d
 	}
 
+	dayRule := TimeRule{Start: dayStart, Finish: dayFinish, Fare: dayFare}
+	nightRule := TimeRule{Start: nightStart, Finish: nightFinish, Fare: nightFare}
+	speedRule := SpeedRule{Limit: speedLimitFare, Fare: idleFare}
+	estimatorConfig, err := GetEstimatorConfig(dayRule, nightRule, speedRule)
+	assert.NoError(t, err)
+
 	// This are all the steps of the process
 	aggregator := NewAggregator(output, flushInterval, minFare, flagFare, aggregatorWorkers)
-	estimator := NewEstimator(getEstimatorConfig(dayFare, nightFare, idleFare, speedLimitFare), aggregator)
+	estimator := NewEstimator(estimatorConfig, aggregator)
 	filter := NewSpeedFilter(estimator, speedLimitFilter)
 	segmenter := NewSegmenter(filter, distanceCalc, segmenterWorkers)
 	/////
@@ -50,26 +61,6 @@ func TestAppFlow(t *testing.T) {
 
 	<-aggregator.Running()
 	assert.Equal(t, expectedOutput(), outputFares)
-}
-
-func getEstimatorConfig(dayFare, nightFare, idleFare domain.Fare, speedLimitFare float32) []RateConfig {
-	return []RateConfig{
-		{Rule: func(delta *domain.SegmentDelta) (b bool, m multiplier) {
-			start := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 5, 0, 0, 0, time.UTC) // 5:00 - 0
-			end := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 0, 0, 0, 0, time.UTC)
-			return delta.Velocity > speedLimitFare && inTimeSpan(start, end, delta.Date),
-				delta.Distance
-		}, Fare: dayFare},
-		{Rule: func(delta *domain.SegmentDelta) (b bool, m multiplier) {
-			start := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 0, 0, 0, 0, time.UTC)
-			end := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 5, 0, 0, 0, time.UTC)
-			return delta.Velocity > speedLimitFare && inTimeSpan(start, end, delta.Date),
-				delta.Distance
-		}, Fare: nightFare},
-		{Rule: func(delta *domain.SegmentDelta) (b bool, m multiplier) {
-			return delta.Velocity <= speedLimitFare, delta.Duration
-		}, Fare: idleFare},
-	}
 }
 
 func getInput() []*domain.Position {

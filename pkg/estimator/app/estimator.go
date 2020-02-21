@@ -33,10 +33,10 @@ func (e *Estimator) Estimate(delta *domain.SegmentDelta) error {
 		return e.sendToAggregate(finalRate)
 	}
 
-	for _, config := range e.rateConfigs {
-		ok, mult := config.Rule(delta)
+	for _, cfg := range e.rateConfigs {
+		ok, mult := cfg.Rule(delta)
 		if ok {
-			finalRate.Fare = domain.Fare(mult * float32(config.Fare))
+			finalRate.Fare = domain.Fare(mult * float32(cfg.Fare))
 			return e.sendToAggregate(finalRate)
 		}
 	}

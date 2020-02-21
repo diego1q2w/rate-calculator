@@ -6,16 +6,13 @@ import (
 	"os"
 	"rate-calculator/pkg/estimator/api"
 	"rate-calculator/pkg/estimator/app"
-	"rate-calculator/pkg/estimator/domain"
 	"rate-calculator/pkg/estimator/output"
 	"time"
 )
 
-type multiplier = float32
-
 const (
 	// File
-	csvPath        = "./paths.csv"
+	csvPath        = "./paths.csv" //TODO: add the posiblity to inject it through arguments
 	outputPath     = "./output.txt"
 	csvFieldLength = 4
 
@@ -32,13 +29,28 @@ const (
 	idleSpeedLimit = 10.0
 	minFare        = 3.47
 	flagFare       = 1.30
+
+	//Time fares
+	dayStart    = "05:00"
+	dayFinish   = "00:00"
+	nightStart  = "00:00"
+	nightFinish = "05:00"
 )
 
 func main() {
 	outputFile := output.NewFileOutput(outputPath)
 
+	dayRule := app.TimeRule{Start: dayStart, Finish: dayFinish, Fare: dayFare}
+	nightRule := app.TimeRule{Start: nightStart, Finish: nightFinish, Fare: nightFare}
+	speedRule := app.SpeedRule{Limit: idleSpeedLimit, Fare: idleFare}
+	estimatorConfig, err := app.GetEstimatorConfig(dayRule, nightRule, speedRule)
+	if err != nil {
+		fmt.Println("Error:", err)
+		os.Exit(1)
+	}
+
 	aggregator := app.NewAggregator(outputFile, flushInterval, minFare, flagFare, aggregatorWorkers)
-	estimator := app.NewEstimator(getEstimatorConfig(dayFare, nightFare, idleFare, idleSpeedLimit), aggregator)
+	estimator := app.NewEstimator(estimatorConfig, aggregator)
 	filter := app.NewSpeedFilter(estimator, speedLimit)
 	segmenter := app.NewSegmenter(filter, haversine.Distance, segmenterWorkers)
 
@@ -52,36 +64,4 @@ func main() {
 	fmt.Printf("The input file has been processed, due to the concurrency the process may take few moments more \n")
 	<-aggregator.Running()
 	fmt.Printf("Process finished \n")
-}
-
-func getEstimatorConfig(dayFare, nightFare, idleFare domain.Fare, speedLimitFare float32) []app.RateConfig {
-	return []app.RateConfig{
-		{
-			Rule: func(delta *domain.SegmentDelta) (b bool, m multiplier) { // > 10 Km/H (05:00 - 00:00]
-				start := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 5, 0, 0, 0, time.UTC)
-				end := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 0, 0, 0, 0, time.UTC)
-				return delta.Velocity > speedLimitFare && inTimeSpan(start, end, delta.Date), delta.Distance
-			}, Fare: dayFare},
-		{
-			Rule: func(delta *domain.SegmentDelta) (b bool, m multiplier) { // > 10 Km/H (00:00 - 05:00]
-				start := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 0, 0, 0, 0, time.UTC)
-				end := time.Date(delta.Date.Year(), delta.Date.Month(), delta.Date.Day(), 5, 0, 0, 0, time.UTC)
-				return delta.Velocity > speedLimitFare && inTimeSpan(start, end, delta.Date), delta.Distance
-			}, Fare: nightFare},
-		{
-			Rule: func(delta *domain.SegmentDelta) (b bool, m multiplier) { // <= 10 Km/H
-				return delta.Velocity <= speedLimitFare, delta.Duration
-			}, Fare: idleFare},
-	}
-}
-
-// Non inclusive start
-func inTimeSpan(start, end, check time.Time) bool {
-	if start.Before(end) {
-		return check.After(start) && !check.After(end)
-	}
-	if start.Equal(end) {
-		return check.Equal(start)
-	}
-	return start.Before(check) || !end.Before(check)
 }
