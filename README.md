@@ -1,21 +1,22 @@
 # Fare Estimator
 
 ### Intro
-The flow is divided into 3 layers each one with their set test those layers are `api` (the input), `app` which has 
-more layers and `output` which as the name tells is the latest stage of the process.
+The flow is divided into 3 layers each one with their set of tests, those layers are `api` (the input), `app` 
+ where all the calculations happen this one has more layers, and the `output` which as the name tells is the 
+ the latest stage of the process, where the file is written.
 
 - `api`: Is where the process starts with a property called `FileReader` this reads the provided file, validates its existence
 and transforms each row into a go struct `Position` for further processing.
 
-- `app`: Is where the whole process happens, this layer is split into different, this layer accepts the struct provider by
-the reader and processes them taking the advantage of goroutines, how those routines are used it depends on the stage, and those are:
+- `app`: Here is where the magic happens (and is divided into more stages), it accepts the struct provider by the `api` and processes 
+them taking the advantage of goroutines, how those routines are used it depends on the stage (more about that below), and those stages are:
     
     - `segmenter`: This has the task to calculate a segment and the data associated with it, such as `distance`, `velocity` and `time`.
     - `filter` : This takes the output of the previous stages and filters it, in this case, based on speed.
     - `estimator`: This is the process that calculates the cost of that segment, based on mainly time and speed
-    - `aggregator`: Uses the result of the estimator to aggregate the cost of each segment by ride ID
+    - `aggregator`: Uses the result of the estimator to aggregate the cost of every segment by ride ID
 
-- `output`: It takes the result of the aggregator and writes into a file.
+- `output`: It takes the result of the aggregator, witting into a file `output.txt`.
 
 ### Concurrency architecture
 
@@ -23,21 +24,22 @@ In this specific task, concurrency plays a very important role, as it is how the
 to accelerate its processing.
 
 The `api` and `output` are single-threaded so nothing special about them, their job is to both read and write data from and to a single source.
+
 The `app` however, is where the magic happens, each row is transformed into a struct called `Position`, then the `segmenter` uses pairs of them to
 calculate a segment, that happens concurrently, the `segmenter` has `N` `goroutines` running then pushes those pairs of points to a channel, in each goroutine,
 the segment is calculated (distance, time, etc), then is filtered, and the fare value of that segment is calculated.
 
-Put it in other words each pair of Positions is routed using channels into a cluster of goroutines where within each goroutine, 
-that pair is transformed into a segment, then that segment is filtered and ultimately the fare value of that segment is calculated, the fina value 
-of that ride is calculated by the aggregator.
+In other words, each pair of Positions is routed using channels into a cluster of goroutines where within each goroutine, 
+that pair is transformed into a segment (`segmenter`), then that segment is filtered (`filter`) 
+and ultimately the fare value of that segment is calculated (`estimator`).
 
 The aggregator runs in its cluster of `goroutines` which ideally should be less than the previous one, and the reason for that, 
-is because each `goroutine` keeps its calculation of the cost of the ride, so the result of the previous process, is then aggregated
+is because each `goroutine` keeps its aggregation of the cost of the ride, so the result of the previous process (`estimator`), is then aggregated
 in each goroutine independently from others, thanks to that we don't have to use a mutex and block the whole process each time a new increment is happening.
 
-So each `aggregator` routine keeps its own and independent ride calculation, that means that a single ride can be aggregated in several 
-routines at the same time and to finally join those results, every now and then we flush those workers into a `masterAggregator` 
-which runs in his own space and then process each flush one by one avoiding unwanted data overrides, then the result of that is flushed into a file
+So each `aggregator` routine keeps its own and independent ride calculation, which means that a single ride can be aggregated in several 
+`goroutines` at the same time. To merge those results we flush every now and then (with a channel), those workers into a `masterAggregator` 
+which runs in his own `goroutine` and then process each flush one by one avoiding unwanted data overrides, to finally write that flush into a file
 
 As the flush process might happen a few times in the process, the `output` file is updated each time.
 
@@ -71,6 +73,7 @@ For testing:
 
     go test ./...
 
+After the script is done the result will be in a file called `output.txt` at the route of this project.
 ### Project structure
 
 Each domain follow this convention
@@ -79,6 +82,7 @@ Each domain follow this convention
     ├─── app - It's where the business logic is placed.
        ├─── segmenter.go - It calculates each segment
        ├─── filter.go - Filters a given segment
+       ├─── estimator-config.go - It has all the config needed by the estimator.go for calculating the fare segment
        ├─── estimator.go - Calculates the cost of that segment
        ├─── aggregator.go - Aggregates the cost of every segment by Ride ID
     ├─── domain - Are the domain entities.
