@@ -2,7 +2,7 @@ package app
 
 import (
 	"fmt"
-	"rate-calculator/pkg/domain"
+	"rate-calculator/pkg/estimator/domain"
 )
 
 //go:generate moq -out estimator_mock_test.go . estimator

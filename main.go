@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"github.com/umahmood/haversine"
 	"os"
-	"rate-calculator/pkg/api"
-	"rate-calculator/pkg/app"
-	"rate-calculator/pkg/domain"
-	"rate-calculator/pkg/output"
+	"rate-calculator/pkg/estimator/api"
+	"rate-calculator/pkg/estimator/app"
+	"rate-calculator/pkg/estimator/domain"
+	"rate-calculator/pkg/estimator/output"
 	"time"
 )
 

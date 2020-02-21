@@ -3,8 +3,8 @@ package app
 import (
 	"errors"
 	"github.com/stretchr/testify/assert"
-	"rate-calculator/pkg/domain"
-	fileOutput "rate-calculator/pkg/output"
+	"rate-calculator/pkg/estimator/domain"
+	fileOutput "rate-calculator/pkg/estimator/output"
 	"sort"
 	"testing"
 	"time"

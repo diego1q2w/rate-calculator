@@ -3,7 +3,7 @@ package app
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/umahmood/haversine"
-	"rate-calculator/pkg/domain"
+	"rate-calculator/pkg/estimator/domain"
 	"testing"
 	"time"
 )

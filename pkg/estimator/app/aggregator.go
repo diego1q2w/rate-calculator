@@ -2,8 +2,8 @@ package app
 
 import (
 	"fmt"
-	"rate-calculator/pkg/domain"
-	fileOutput "rate-calculator/pkg/output"
+	"rate-calculator/pkg/estimator/domain"
+	fileOutput "rate-calculator/pkg/estimator/output"
 	"sync"
 	"time"
 )

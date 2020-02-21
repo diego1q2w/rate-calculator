@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/umahmood/haversine"
-	"rate-calculator/pkg/domain"
+	"rate-calculator/pkg/estimator/domain"
 	"time"
 )
 

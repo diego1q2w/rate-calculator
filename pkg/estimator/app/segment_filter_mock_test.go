@@ -4,7 +4,7 @@
 package app
 
 import (
-	"rate-calculator/pkg/domain"
+	"rate-calculator/pkg/estimator/domain"
 	"sync"
 )
 

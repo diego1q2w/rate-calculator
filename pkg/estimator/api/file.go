@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"rate-calculator/pkg/domain"
+	"rate-calculator/pkg/estimator/domain"
 	"strconv"
 )
 

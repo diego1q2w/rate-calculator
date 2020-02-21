@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"rate-calculator/pkg/domain"
+	"rate-calculator/pkg/estimator/domain"
 )
 
 type FileOutput struct {

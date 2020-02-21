@@ -3,7 +3,7 @@ package output
 import (
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
-	"rate-calculator/pkg/domain"
+	"rate-calculator/pkg/estimator/domain"
 	"testing"
 )
 

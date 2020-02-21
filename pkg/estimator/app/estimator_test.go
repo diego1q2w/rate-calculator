@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"rate-calculator/pkg/domain"
+	"rate-calculator/pkg/estimator/domain"
 	"testing"
 	"time"
 )
