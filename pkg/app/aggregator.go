@@ -96,6 +96,7 @@ func (a *Aggregator) aggregate(aggregateCh chan finalFare) {
 
 				continue
 			}
+			emptyFlushes = 0
 			aggregateCh <- fFare
 			fFare = make(finalFare)
 		}
